@@ -1,8 +1,10 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet, useSearchParams } from "react-router-dom";
 import { getInvoices } from "data";
+import QueryNavLink from "components/QueryNavLink";
 
 export default function Invoices() {
     let invoices = getInvoices();
+    let [searchParams, setSearchParams] = useSearchParams();
 
     return (
       <div style={{display: "flex"}}>
@@ -10,10 +12,38 @@ export default function Invoices() {
               borderRight: "solid 1px",
               padding: "1rem"
           }}>
-             {invoices.map(({ number, name}) => (
-                 <Link style={{display: "block", margin: "1rem 0"}} to={`/invoices/${number}`} key={number}>
-                     {name}
-                 </Link>    
+          <input
+          value={searchParams.get("filter") || ""}
+          onChange={event => {
+            let filter = event.target.value;
+            if (filter) {
+              setSearchParams({ filter });
+            } else {
+              setSearchParams({});
+            }
+          }}
+        />
+             {invoices
+            .filter(invoice => {
+              let filter = searchParams.get("filter");
+              if (!filter) return true;
+              let name = invoice.name.toLowerCase();
+              return name.startsWith(filter.toLowerCase());
+              })
+             .map(({ number, name}) => (
+              <QueryNavLink
+              style={({ isActive }) => {
+                return {
+                  display: "block",
+                  margin: "1rem 0",
+                  color: isActive ? "red" : ""
+                };
+              }}
+              to={`/invoices/${number}`}
+              key={number}
+            >
+              {name}
+            </QueryNavLink>   
              ))} 
           </nav>
         <Outlet />        
